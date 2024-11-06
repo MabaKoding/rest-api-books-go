@@ -1,0 +1,134 @@
+definitions:
+  models.Books:
+    properties:
+      booksAuthor:
+        type: string
+      booksDescription:
+        type: string
+      booksPublished:
+        type: string
+      booksPublisher:
+        type: string
+      booksSubtitle:
+        type: string
+      booksTitle:
+        type: string
+      id:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /:
+    get:
+      description: get Books
+      parameters:
+      - description: Filter. e.g. col1:v1,col2:v2
+        in: query
+        name: query
+        type: string
+      - description: Fields returned. e.g. col1,col2
+        in: query
+        name: fields
+        type: string
+      - description: Sorted-by fields. e.g. col1,col2
+        in: query
+        name: sortby
+        type: string
+      - description: Order corresponding to each sortby field, if single value, apply
+          to all sortby fields. e.g. desc,asc
+        in: query
+        name: order
+        type: string
+      - description: Limit the size of result set. Must be an integer
+        in: query
+        name: limit
+        type: string
+      - description: Start position of result set. Must be an integer
+        in: query
+        name: offset
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Books'
+        "403":
+          description: Forbidden
+    post:
+      description: create Books
+      parameters:
+      - description: body for Books content
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Books'
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: int
+        "403":
+          description: Forbidden
+          schema:
+            type: body
+  /:id:
+    delete:
+      description: delete the Books
+      parameters:
+      - description: The id you want to delete
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: id
+    get:
+      description: get Books by id
+      parameters:
+      - description: The key for staticblock
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Books'
+        "403":
+          description: Forbidden
+          schema:
+            type: id
+    put:
+      description: update the Books
+      parameters:
+      - description: The id you want to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: body for Books content
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Books'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Books'
+        "403":
+          description: Forbidden
+          schema:
+            type: id
+swagger: "2.0"
