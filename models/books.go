@@ -1,156 +1,211 @@
 package models
 
 import (
+	"database/sql"
+	"encoding/json"
 	"errors"
-	"fmt"
-	"reflect"
+	"strconv"
 	"strings"
-	"time"
-
-	"github.com/beego/beego/v2/client/orm"
 )
 
-type Books struct {
-	Id               string    `orm:"column(books_isbn);pk"`
-	BooksTitle       string    `orm:"column(books_title)"`
-	BooksSubtitle    string    `orm:"column(books_subtitle)"`
-	BooksAuthor      string    `orm:"column(books_author)"`
-	BooksDescription string    `orm:"column(books_description)"`
-	BooksPublished   time.Time `orm:"column(books_published);type(date)"`
-	BooksPublisher   string    `orm:"column(books_publisher)"`
-}
-
-func (t *Books) TableName() string {
-	return "books"
-}
-
-func init() {
-	orm.RegisterModel(new(Books))
-}
-
-// AddBooks insert a new Books into database and returns
-// last inserted Id on success.
-func AddBooks(m *Books) (id int64, err error) {
-	o := orm.NewOrm()
-	id, err = o.Insert(m)
-	return
-}
-
-// GetBooksById retrieves Books by Id. Returns error if
-// Id doesn't exist
-func GetBooksById(id string) (v *Books, err error) {
-	o := orm.NewOrm()
-	v = &Books{Id: id}
-	if err = o.Read(v); err == nil {
-		return v, nil
+type (
+	BookModel struct {
+		Limit   int
+		Offset  int
+		SortBy  string
+		SortDir string
 	}
-	return nil, err
-}
-
-// GetAllBooks retrieves all Books matches certain condition. Returns empty list if
-// no records exist
-func GetAllBooks(query map[string]string, fields []string, sortby []string, order []string,
-	offset int64, limit int64) (ml []interface{}, err error) {
-	o := orm.NewOrm()
-	qs := o.QueryTable(new(Books))
-	// query k=v
-	for k, v := range query {
-		// rewrite dot-notation to Object__Attribute
-		k = strings.Replace(k, ".", "__", -1)
-		if strings.Contains(k, "isnull") {
-			qs = qs.Filter(k, (v == "true" || v == "1"))
-		} else {
-			qs = qs.Filter(k, v)
-		}
+	BookData struct {
+		Id               string `json:"books_isbn"`
+		BooksTitle       string `json:"books_title"`
+		BooksSubtitle    string `json:"books_subtitle"`
+		BooksAuthor      string `json:"books_author"`
+		BooksDescription string `json:"books_description"`
+		BooksPublished   string `json:"books_published"`
+		BooksPublisher   string `json:"books_publisher"`
 	}
-	// order by:
-	var sortFields []string
-	if len(sortby) != 0 {
-		if len(sortby) == len(order) {
-			// 1) for each sort field, there is an associated order
-			for i, v := range sortby {
-				orderby := ""
-				if order[i] == "desc" {
-					orderby = "-" + v
-				} else if order[i] == "asc" {
-					orderby = v
-				} else {
-					return nil, errors.New("Error: Invalid order. Must be either [asc|desc]")
-				}
-				sortFields = append(sortFields, orderby)
-			}
-			qs = qs.OrderBy(sortFields...)
-		} else if len(sortby) != len(order) && len(order) == 1 {
-			// 2) there is exactly one order, all the sorted fields will be sorted by this order
-			for _, v := range sortby {
-				orderby := ""
-				if order[0] == "desc" {
-					orderby = "-" + v
-				} else if order[0] == "asc" {
-					orderby = v
-				} else {
-					return nil, errors.New("Error: Invalid order. Must be either [asc|desc]")
-				}
-				sortFields = append(sortFields, orderby)
-			}
-		} else if len(sortby) != len(order) && len(order) != 1 {
-			return nil, errors.New("Error: 'sortby', 'order' sizes mismatch or 'order' size is not 1")
-		}
-	} else {
-		if len(order) != 0 {
-			return nil, errors.New("Error: unused 'order' fields")
-		}
+)
+
+func (m *BookModel) CreateObject(data *BookData) (interface{}, error) {
+	var dataMap map[string]interface{}
+	j, _ := json.Marshal(data)
+	err := json.Unmarshal(j, &dataMap)
+	if err != nil {
+		return nil, err
 	}
 
-	var l []Books
-	qs = qs.OrderBy(sortFields...)
-	if _, err = qs.Limit(limit, offset).All(&l, fields...); err == nil {
-		if len(fields) == 0 {
-			for _, v := range l {
-				ml = append(ml, v)
-			}
-		} else {
-			// trim unused fields
-			for _, v := range l {
-				m := make(map[string]interface{})
-				val := reflect.ValueOf(v)
-				for _, fname := range fields {
-					m[fname] = val.FieldByName(fname).Interface()
-				}
-				ml = append(ml, m)
-			}
-		}
-		return ml, nil
-	}
-	return nil, err
-}
+	pgHandler := new(BaseModelPG)
+	_, err = pgHandler.CreateObject("books", dataMap)
 
-// UpdateBooks updates Books by Id and returns error if
-// the record to be updated doesn't exist
-func UpdateBooksById(m *Books) (err error) {
-	o := orm.NewOrm()
-	v := Books{Id: m.Id}
-	// ascertain id exists in the database
-	if err = o.Read(&v); err == nil {
-		var num int64
-		if num, err = o.Update(m); err == nil {
-			fmt.Println("Number of records updated in database:", num)
-		}
+	if err != nil {
+		return nil, err
 	}
-	return
+	res, err := pgHandler.GetObjectByField("books", "books_isbn", data.Id)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
+func (db *BookModel) GetObject(id string) (interface{}, error) {
+	// var book map[string]interface{}
+	var err error
+	bookId, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, errors.New("invalid book isbn")
+	}
+	dbHandler := new(BaseModelPG)
+	res, err := dbHandler.GetObjectByField("books", "books_isbn", bookId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sql.ErrNoRows
+		}
+		return nil, err
+	}
 
-// DeleteBooks deletes Books by Id and returns error if
-// the record to be deleted doesn't exist
-func DeleteBooks(id string) (err error) {
-	o := orm.NewOrm()
-	v := Books{Id: id}
-	// ascertain id exists in the database
-	if err = o.Read(&v); err == nil {
-		var num int64
-		if num, err = o.Delete(&Books{Id: id}); err == nil {
-			fmt.Println("Number of records deleted in database:", num)
+	// if book != nil {
+	// delete(user, "password")
+	// }
+
+	return res, nil
+}
+func (db *BookModel) GetObjectByParams(params ...map[string]interface{}) (interface{}, error) {
+	var paramsMap map[string]interface{}
+	if len(params) > 0 {
+		paramsMap = params[0]
+	}
+
+	var query string
+	bindVars := make(map[string]interface{})
+	filterData := make([]string, 0)
+	joins := make([]string, 0)
+
+	query += `SELECT *`
+
+	// if paramsMap["isJoin"] != nil && paramsMap["isJoin"].(bool) {
+	// 	query += `, wpb.va_number `
+	// 	joins = append(joins, ` JOIN "wallet_public_user" wpb ON wpb.public_user_id = pb.id `)
+	// }
+
+	// if paramsMap["user_id"] != nil && paramsMap["user_id"].(string) != "" {
+	// 	filterData = append(filterData, `pb.id = @userID`)
+	// 	bindVars["userID"] = paramsMap["user_id"].(string)
+	// }
+
+	if paramsMap["isbn"] != nil && paramsMap["isbn"].(string) != "" {
+		filterData = append(filterData, ` books_isbn = @bookIsbn `)
+		bindVars["bookIsbn"] = paramsMap["isbn"].(string)
+	}
+
+	query += ` FROM "books" `
+
+	var joinsString string
+	if len(joins) > 0 {
+		joinsString = strings.Join(joins, ` `)
+	}
+
+	var where string
+	if len(filterData) > 0 {
+		where = `WHERE ` + strings.Join(filterData, " AND ")
+	}
+
+	query += joinsString
+	query += where
+	query += ` LIMIT 1`
+
+	dbHandler := new(BaseModelPG)
+
+	var output interface{}
+
+	output, err := dbHandler.GetObjectByQuery(query, bindVars)
+	if err != nil {
+		return nil, errors.New("invalid book isbn")
+		// ZapLogger.Error(err.Error())
+	}
+
+	return output, nil
+}
+func (m *BookModel) GetAllCollection(params ...map[string]interface{}) ([]interface{}, error) {
+	var paramsMap map[string]interface{}
+	if params != nil && len(params) > 0 {
+		paramsMap = params[0]
+	}
+
+	var query string
+	bindVars := make(map[string]interface{})
+	filterData := make([]string, 0)
+
+	query += `SELECT COUNT(b.books_isbn) as count, json_agg(b.*) `
+
+	if paramsMap["isbn"] != nil && paramsMap["isbn"].(string) != "" {
+		filterData = append(filterData, ` b.books_isbn = @bookIsbn `)
+		bindVars["bookIsbn"] = paramsMap["isbn"].(string)
+	}
+	query += ` FROM "books" b `
+
+	var where string
+	if len(filterData) > 0 {
+		where = ` WHERE ` + strings.Join(filterData, " AND ")
+	}
+
+	if where != "" {
+		query += where
+	}
+
+	if m.SortBy != "" {
+		query += ` ORDER BY ` + m.SortBy
+		if m.SortDir != "" {
+			query += " " + m.SortDir + " "
 		}
 	}
-	return
+
+	/*
+		virtually unlimited, this is set to secure server
+	*/
+	if m.Limit == 0 || m.Limit > 1000 {
+		m.Limit = 1000
+	}
+	if m.Limit > 0 {
+		query += ` LIMIT ` + strconv.Itoa(m.Limit)
+	}
+
+	dbHandler := new(BaseModelPG)
+	// dataRes := UserMerchantData{}
+
+	results, _, err := dbHandler.GetCollectionWithCountByQuery(query, bindVars)
+	if err != nil {
+		// ZapLogger.Error(err.Error())
+	}
+
+	return results, nil
+}
+func (m *BookModel) GetCountByIsbn(bookIsbn string) (int64, error) {
+	if bookIsbn == "" {
+		return 0, errors.New("Missing Books ISBN")
+	}
+
+	filterData := make([]string, 0)
+	bindVars := make(map[string]interface{})
+
+	query := `SELECT COUNT(ipd.*) as counting`
+
+	query += ` FROM "books" ipd `
+
+	filterData = append(filterData, ` ipd.books_isbn = @bookIsbn`)
+	bindVars["bookIsbn"] = bookIsbn
+
+	var where string
+	if len(filterData) > 0 {
+		where = `WHERE ` + strings.Join(filterData, " AND ")
+	}
+
+	query += where
+
+	dbHandler := new(BaseModelPG)
+
+	count, err := dbHandler.GetCountByQuery(query, bindVars)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

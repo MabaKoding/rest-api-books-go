@@ -20,51 +20,13 @@
                 "tags": [
                     "books"
                 ],
-                "description": "get Books\n\u003cbr\u003e",
-                "operationId": "BooksController.Get All",
-                "parameters": [
-                    {
-                        "in": "query",
-                        "name": "query",
-                        "description": "Filter. e.g. col1:v1,col2:v2",
-                        "type": "string"
-                    },
-                    {
-                        "in": "query",
-                        "name": "fields",
-                        "description": "Fields returned. e.g. col1,col2",
-                        "type": "string"
-                    },
-                    {
-                        "in": "query",
-                        "name": "sortby",
-                        "description": "Sorted-by fields. e.g. col1,col2",
-                        "type": "string"
-                    },
-                    {
-                        "in": "query",
-                        "name": "order",
-                        "description": "Order corresponding to each sortby field, if single value, apply to all sortby fields. e.g. desc,asc",
-                        "type": "string"
-                    },
-                    {
-                        "in": "query",
-                        "name": "limit",
-                        "description": "Limit the size of result set. Must be an integer",
-                        "type": "string"
-                    },
-                    {
-                        "in": "query",
-                        "name": "offset",
-                        "description": "Start position of result set. Must be an integer",
-                        "type": "string"
-                    }
-                ],
+                "description": "API to get all of list book\n\u003cbr\u003e",
+                "operationId": "BookController.Get All",
                 "responses": {
                     "200": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/models.Books"
+                            "$ref": "#/definitions/models.BookData"
                         }
                     },
                     "403": {
@@ -77,7 +39,7 @@
                     "books"
                 ],
                 "description": "create Books\n\u003cbr\u003e",
-                "operationId": "BooksController.Post",
+                "operationId": "BookController.Post",
                 "parameters": [
                     {
                         "in": "body",
@@ -91,7 +53,7 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "{int} models.Books"
+                        "description": "{int} models.BookData"
                     },
                     "403": {
                         "description": "body is empty"
@@ -99,97 +61,61 @@
                 }
             }
         },
-        "/books/{id}": {
+        "/books/{bookIsbn}": {
             "get": {
                 "tags": [
                     "books"
                 ],
-                "description": "get Books by id\n\u003cbr\u003e",
-                "operationId": "BooksController.Get One",
+                "description": "API to get one data book\n\u003cbr\u003e",
+                "operationId": "BookController.Get One",
                 "parameters": [
                     {
                         "in": "path",
                         "name": "id",
-                        "description": "The key for staticblock",
+                        "description": "the book isbn",
                         "required": true,
                         "type": "string"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.Books"
-                        }
+                        "description": "{string} models.BookData"
                     },
                     "403": {
-                        "description": "id is empty"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "books"
-                ],
-                "description": "update the Books\n\u003cbr\u003e",
-                "operationId": "BooksController.Put",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "id",
-                        "description": "The id you want to update",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "in": "body",
-                        "name": "body",
-                        "description": "body for Books content",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Books"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.Books"
-                        }
-                    },
-                    "403": {
-                        "description": "id is not int"
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "books"
-                ],
-                "description": "delete the Books\n\u003cbr\u003e",
-                "operationId": "BooksController.Delete",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "id",
-                        "description": "The id you want to delete",
-                        "required": true,
-                        "type": "string"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "{string} delete success!"
-                    },
-                    "403": {
-                        "description": "id is empty"
+                        "description": "body is empty"
                     }
                 }
             }
         }
     },
     "definitions": {
+        "models.BookData": {
+            "title": "BookData",
+            "type": "object",
+            "properties": {
+                "books_author": {
+                    "type": "string"
+                },
+                "books_description": {
+                    "type": "string"
+                },
+                "books_isbn": {
+                    "type": "string"
+                },
+                "books_published": {
+                    "type": "string"
+                },
+                "books_publisher": {
+                    "type": "string"
+                },
+                "books_subtitle": {
+                    "type": "string"
+                },
+                "books_title": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Books": {
             "title": "Books",
             "type": "object",
@@ -218,11 +144,5 @@
                 }
             }
         }
-    },
-    "tags": [
-        {
-            "name": "books",
-            "description": "BooksController operations for Books\n"
-        }
-    ]
+    }
 }

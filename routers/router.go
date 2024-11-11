@@ -18,7 +18,7 @@ func init() {
 
 		beego.NSNamespace("/books",
 			beego.NSInclude(
-				&controllers.BooksController{},
+				&controllers.BookController{},
 			),
 		),
 	)

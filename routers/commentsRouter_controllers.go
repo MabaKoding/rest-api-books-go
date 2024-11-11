@@ -7,6 +7,33 @@ import (
 
 func init() {
 
+    beego.GlobalControllerRouter["books_crud/controllers:BookController"] = append(beego.GlobalControllerRouter["books_crud/controllers:BookController"],
+        beego.ControllerComments{
+            Method: "Get",
+            Router: "/",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["books_crud/controllers:BookController"] = append(beego.GlobalControllerRouter["books_crud/controllers:BookController"],
+        beego.ControllerComments{
+            Method: "Post",
+            Router: "/",
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["books_crud/controllers:BookController"] = append(beego.GlobalControllerRouter["books_crud/controllers:BookController"],
+        beego.ControllerComments{
+            Method: "GetOne",
+            Router: "/:bookIsbn",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
     beego.GlobalControllerRouter["books_crud/controllers:BooksController"] = append(beego.GlobalControllerRouter["books_crud/controllers:BooksController"],
         beego.ControllerComments{
             Method: "Post",
