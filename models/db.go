@@ -185,7 +185,7 @@ func (m *BaseModelPG) UpdateObject(tableName string, dataMap map[string]interfac
 
 }
 
-func (m *BaseModelPG) UpdateDataObject(tableName string, primaryKey int64, dataMap map[string]interface{}) (pgconn.CommandTag, error) {
+func (m *BaseModelPG) UpdateDataObject(tableName string, primaryKeyName string, primaryKey string, dataMap map[string]interface{}) (pgconn.CommandTag, error) {
 
 	conn, err := Connect()
 	if err != nil {
@@ -219,7 +219,7 @@ func (m *BaseModelPG) UpdateDataObject(tableName string, primaryKey int64, dataM
 		i++
 	}
 	pgQuery += strings.Join(updateArr, `,`)
-	pgQuery += ` WHERE id = $` + strconv.Itoa(i)
+	pgQuery += ` WHERE ` + primaryKeyName + ` = $` + strconv.Itoa(i)
 	args = append(args, primaryKey)
 
 	return conn.Exec(context.Background(), pgQuery, args...)
@@ -381,7 +381,7 @@ func (m *BaseModelPG) GetObjectV2(output *map[string]interface{}, tableName stri
 	return nil
 }
 
-func (m *BaseModelPG) DeleteObject(tableName string, columnName string, primaryKey int64) (pgconn.CommandTag, error) {
+func (m *BaseModelPG) DeleteObject(tableName string, columnName string, primaryKey string) (pgconn.CommandTag, error) {
 
 	conn, err := Connect()
 	if err != nil {

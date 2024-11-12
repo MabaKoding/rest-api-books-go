@@ -46,6 +46,40 @@ func (m *BookModel) CreateObject(data *BookData) (interface{}, error) {
 	}
 	return res, nil
 }
+func (m *BookModel) UpdateObject(primaryKey string, dataMap map[string]interface{}) (interface{}, error) {
+	// if primaryKey == "" {
+	// 	return nil, errors.New("Missing primaryKey")
+	// }
+	// var output map[string]interface{}
+
+	pgHandler := new(BaseModelPG)
+
+	_, err := pgHandler.UpdateDataObject("books", "books_isbn", primaryKey, dataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := pgHandler.GetObjectByField("books", "books_isbn", primaryKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
+}
+func (m *BookModel) DeleteObject(id string) (interface{}, error) {
+	// if id == "" {
+	// 	return errors.New("Missing ID object")
+	// }
+
+	dbHandler := new(BaseModelPG)
+
+	res, err := dbHandler.DeleteObject("books", "books_isbn", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, err
+}
 func (db *BookModel) GetObject(id string) (interface{}, error) {
 	// var book map[string]interface{}
 	var err error

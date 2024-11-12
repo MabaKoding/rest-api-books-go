@@ -34,6 +34,24 @@ func init() {
             Filters: nil,
             Params: nil})
 
+    beego.GlobalControllerRouter["books_crud/controllers:BookController"] = append(beego.GlobalControllerRouter["books_crud/controllers:BookController"],
+        beego.ControllerComments{
+            Method: "Delete",
+            Router: "/:bookIsbn/remove",
+            AllowHTTPMethods: []string{"delete"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["books_crud/controllers:BookController"] = append(beego.GlobalControllerRouter["books_crud/controllers:BookController"],
+        beego.ControllerComments{
+            Method: "Update",
+            Router: "/:bookIsbn/update",
+            AllowHTTPMethods: []string{"PUT"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
     beego.GlobalControllerRouter["books_crud/controllers:BooksController"] = append(beego.GlobalControllerRouter["books_crud/controllers:BooksController"],
         beego.ControllerComments{
             Method: "Post",

@@ -40,7 +40,7 @@ paths:
         description: body for Books content
         required: true
         schema:
-          $ref: '#/definitions/models.Books'
+          $ref: '#/definitions/models.BookData'
       responses:
         "201":
           description: '{int} models.BookData'
@@ -56,7 +56,7 @@ paths:
       operationId: BookController.Get One
       parameters:
       - in: path
-        name: id
+        name: bookIsbn
         description: the book isbn
         required: true
         type: string
@@ -65,7 +65,72 @@ paths:
           description: '{string} models.BookData'
         "403":
           description: body is empty
+  /books/{bookIsbn}/remove:
+    delete:
+      tags:
+      - books
+      description: |-
+        Remove books from the list
+        <br>
+      operationId: BookController.Remove Book
+      parameters:
+      - in: path
+        name: bookIsbn
+        description: the book isbn
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.OutputDeleteResponse'
+        "404":
+          description: :id is not found
+  /books/{bookIsbn}/update:
+    put:
+      tags:
+      - books
+      description: |-
+        Update user data
+        <br>
+      operationId: BookController.Update user data
+      parameters:
+      - in: path
+        name: bookIsbn
+        description: the book isbn
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body for Books content
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.BookRequestUpdate'
+      responses:
+        "200":
+          description: '{string} models.BookData'
+        "403":
+          description: body is empty
 definitions:
+  controllers.BookRequestUpdate:
+    title: BookRequestUpdate
+    type: object
+    properties:
+      books_author:
+        type: string
+      books_description:
+        type: string
+      books_published:
+        type: string
+      books_publisher:
+        type: string
+      books_subtitle:
+        type: string
+      books_title:
+        type: string
+  controllers.OutputDeleteResponse:
+    title: OutputDeleteResponse
+    type: object
   models.BookData:
     title: BookData
     type: object

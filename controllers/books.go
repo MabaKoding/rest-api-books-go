@@ -12,24 +12,13 @@ type (
 	BookController struct {
 		MainController
 	}
-	// BookRequestCreate struct {
-	// 	Name     string `json:"name"`
-	// 	Email    string `json:"email"`
-	// 	Phone    string `json:"phone"`
-	// 	Password string `json:"password"`
-	// 	OtpToken string `json:"otp_token"`
-	// }
-	// BookRequestUpdate struct {
-	// 	Name string `json:"name"`
-	// }
-	// OutputDeleteResponse struct {
-	// 	Success bool   `json:"success"`
-	// 	Message string `json:"message"`
-	// }
-	BookResponse struct {
-		Success string
-		Message string
-		Data    models.BookData
+	BookRequestUpdate struct {
+		BooksTitle       string `json:"books_title"`
+		BooksSubtitle    string `json:"books_subtitle"`
+		BooksAuthor      string `json:"books_author"`
+		BooksDescription string `json:"books_description"`
+		BooksPublished   string `json:"books_published"`
+		BooksPublisher   string `json:"books_publisher"`
 	}
 )
 
@@ -77,7 +66,7 @@ func (c *BookController) Get() {
 // Get GetOne
 // @Title Get One
 // @Description API to get one data book
-// @Param	id		path 	string	true  "the book isbn"
+// @Param	bookIsbn		path 	string	true  "the book isbn"
 // @Success 200 {string} models.BookData
 // @Failure 403 body is empty
 // @router /:bookIsbn [get]
@@ -119,7 +108,7 @@ func (c *BookController) GetOne() {
 // POST PostData
 // @Title Post
 // @Description create Books
-// @Param	body		body 	models.Books	true		"body for Books content"
+// @Param	body		body 	models.BookData	true		"body for Books content"
 // @Success 201 {int} models.BookData
 // @Failure 403 body is empty
 // @router / [post]
@@ -179,5 +168,111 @@ func (c *BookController) Post() {
 
 	output["object"] = saved
 	output["success"] = true
+	c.Data["json"] = output
+}
+
+// Update UpdateData
+// @Title Update user data
+// @Description Update user data
+// @Param	bookIsbn		path 	string	true  "the book isbn"
+// @Param   body        body    controllers.BookRequestUpdate   true        "body for Books content"
+// @Success 200 {string} models.BookData
+// @Failure 403 body is empty
+// @router /:bookIsbn/update [PUT]
+func (c *BookController) Update() {
+	defer c.ServeJSON()
+	output := make(map[string]interface{})
+	output["success"] = false
+
+	var err error
+
+	//URI VALIDATE
+	bookId := c.Ctx.Input.Param(":bookIsbn")
+	if bookId == "" {
+		// ZapLogger.Error("merchant id " + strconv.FormatInt(merchantIdInteger, 64) + " is invalid")
+		c.Ctx.Output.SetStatus(400)
+		output["error"] = "book isbn salah"
+		c.Data["json"] = output
+		return
+	}
+
+	param := c.Ctx.Input.RequestBody
+	reqData := BookRequestUpdate{}
+	// get data from request
+	json.Unmarshal(param, &reqData)
+
+	valid := validation.Validation{}
+	valid.Required(reqData.BooksTitle, "Title")
+	valid.Required(reqData.BooksSubtitle, "Sub Title")
+	valid.Required(reqData.BooksAuthor, "Author")
+	valid.Required(reqData.BooksDescription, "Description")
+	valid.Required(reqData.BooksPublisher, "Publisher")
+	valid.Required(reqData.BooksPublished, "Published")
+
+	if valid.HasErrors() {
+		for _, err := range valid.Errors {
+			c.Ctx.Output.SetStatus(404)
+			output["error"] = err.Key + "" + err.Message
+			c.Data["json"] = output
+			return
+		}
+	}
+	bookModel := new(models.BookModel)
+	res, err := bookModel.UpdateObject(bookId, map[string]interface{}{
+		"books_author":      reqData.BooksAuthor,
+		"books_title":       reqData.BooksTitle,
+		"books_subtitle":    reqData.BooksSubtitle,
+		"books_publisher":   reqData.BooksPublisher,
+		"books_published":   reqData.BooksPublished,
+		"books_description": reqData.BooksDescription,
+	})
+
+	if err != nil {
+		// ZapLogger.Error("invalid updated user " + err.Error())
+		c.Ctx.Output.SetStatus(500)
+		output["error"] = err.Error()
+		c.Data["json"] = output
+		return
+	}
+
+	c.Ctx.Output.SetStatus(200)
+	output["success"] = true
+	output["object"] = res
+	c.Data["json"] = output
+}
+
+// Delete DeleteData
+// @Title Remove Book
+// @Description Remove books from the list
+// @Param	bookIsbn		path 	string	true  "the book isbn"
+// @Success 200 {object} controllers.OutputDeleteResponse
+// @Failure 404 :id is not found
+// @router /:bookIsbn/remove [delete]
+func (c *BookController) Delete() {
+	defer c.ServeJSON()
+	output := make(map[string]interface{})
+	output["success"] = false
+
+	//URI VALIDATE
+	bookId := c.Ctx.Input.Param(":bookIsbn")
+	if bookId == "" {
+		c.Ctx.Output.SetStatus(500)
+		output["error"] = "ISBN tidak ditemukan"
+		c.Data["json"] = output
+		return
+	}
+
+	bookModel := new(models.BookModel)
+
+	res, errDel := bookModel.DeleteObject(bookId)
+	if errDel != nil {
+		c.Ctx.Output.SetStatus(500)
+		output["error"] = "Gagal menghapus data"
+		c.Data["json"] = output
+		return
+	}
+	c.Ctx.Output.SetStatus(200)
+	output["success"] = true
+	output["object"] = res
 	c.Data["json"] = output
 }
